@@ -223,18 +223,17 @@ def shop():
     conn = connect_to_db()
     cursor = conn.cursor()
 
-    data = cursor.execute("SELECT COMMODITYID, NAME, PRICE, QUANTITY FROM COMMODITY_STORE")
+    cursor.execute("SELECT COMMODITYID, NAME, PRICE, QUANTITY FROM COMMODITY_STORE")
+    data = cursor.fetchall()
 
     search_query = request.args.get('search', '') 
 
-    filtered_data = []
-
     if search_query:
-        filtered_data = [row for row in data if search_query.lower().strip() in row[0].lower()]
+        filtered_data = [row for row in data if search_query.lower().strip() in row[1].lower()]
     else:
         filtered_data = data
 
-    return render_template('Search.html', data=filtered_data)  # Here, you're passing `filtered_data`
+    return render_template('Search.html', data=filtered_data)
 
 
 
@@ -333,16 +332,23 @@ def go_to_signin():
 
 @app.route('/contactus', methods=['GET', 'POST'])
 def contactus():
-    if request.method=='POST':
-        name=request.form['name']
-        email=request.form['email']
-        message=request.form['message']
-        conn=connect_to_db()
-        cur=conn.cursor()
-        cur.execute("INSERT INTO contactus (name, email, message) VALUES(%s, %s, %s)", (name , email, message))
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        message = request.form['message']
+        
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO contactus (name, email, message) VALUES (:1, :2, :3)",
+            (name, email, message)
+        )
         conn.commit()
         cur.close()
+        conn.close()
+        
         return render_template('thankyou.html')
+    
     return render_template('contactus.html')
 
 @app.route('/checkout', methods=['GET', 'POST'])
