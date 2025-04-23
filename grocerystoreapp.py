@@ -222,24 +222,17 @@ def shop():
     conn = connect_to_db()
     cursor = conn.cursor()
 
-    # Pull commodity data
-    data = cursor.execute("SELECT NAME, PRICE, QUANTITY, COMMODITYID FROM COMMODITY_STORE")
+    cursor.execute("SELECT COMMODITYID, NAME, PRICE, QUANTITY FROM COMMODITY_STORE")
+    data = cursor.fetchall()
 
     # Get query from search bar
     search_query = request.args.get('search', '') 
 
-    # Initialize empty list
-    filtered_data = []
 
-    # Filter commodity table based on search query
     if search_query:
-        filtered_data = [row for row in data if search_query.lower().strip() in row[0].lower()]
-
-    # If not search then just return full table
+        filtered_data = [row for row in data if search_query.lower().strip() in row[1].lower()]
     else:
         filtered_data = data
-
-    # Render template and pass data table
     return render_template('Search.html', data=filtered_data)
 
 
@@ -322,25 +315,23 @@ def cart():
 
 @app.route('/contactus', methods=['GET', 'POST'])
 def contactus():
-
-    # Collect submission
-    if request.method=='POST':
-        name=request.form['name']
-        email=request.form['email']
-        message=request.form['message']
-
-        # INSERT statement
-        contact_sql = '''
-        INSERT INTO contactus (name, email, message) 
-        VALUES(:1, :2, :3)
-        '''
-        # Execute 
-        insert_data(contact_sql, [(name , email, message)])
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        message = request.form['message']
         
-        # Return template
+        conn = connect_to_db()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO contactus (name, email, message) VALUES (:1, :2, :3)",
+            (name, email, message)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        
         return render_template('thankyou.html')
     
-    # Render template
     return render_template('contactus.html')
 
 
