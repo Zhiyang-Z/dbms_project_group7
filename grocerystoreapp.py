@@ -192,17 +192,16 @@ def createaccount():
             username = request.form['username']
             password = request.form['password']
             phone = request.form['phone']
-            saveditem = request.form['saveditem']
             paypref = request.form['paypref']
 
             # INSERT statement
             insert_sql = '''
-            INSERT INTO ACCOUNT (createDate, phone, password, email, username, saveditem, paypref)
-            VALUES (CURRENT_DATE, :1, :2, :3, :4, :5, :6)
+            INSERT INTO ACCOUNT (createDate, phone, password, email, username, paypref)
+            VALUES (CURRENT_DATE, :1, :2, :3, :4, :5)
             '''
 
             # Execute
-            insert_data(insert_sql, [(phone, password, email, username, saveditem, paypref)]) 
+            insert_data(insert_sql, [(phone, password, email, username, paypref)]) 
 
             # Return to login page
             return redirect(url_for('login'))  # Redirect to login
@@ -226,13 +225,14 @@ def shop():
     cursor.execute("SELECT COMMODITYID, NAME, PRICE, QUANTITY FROM COMMODITY_STORE")
     data = cursor.fetchall()
 
+    # Get query from search bar
     search_query = request.args.get('search', '') 
+
 
     if search_query:
         filtered_data = [row for row in data if search_query.lower().strip() in row[1].lower()]
     else:
         filtered_data = data
-
     return render_template('Search.html', data=filtered_data)
 
 
@@ -246,7 +246,7 @@ def go_to_shop():
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
     try:
-        product_id = request.form['commodityID']  # Make sure this field is in your form
+        product_id = request.form['commodityID']
         product_name = request.form['product_name']
         product_price = float(request.form['price'])
         product_quantity = int(request.form['quantity'])
@@ -313,23 +313,6 @@ def cart():
     return render_template('Cart.html', cart=cart)
 
 
-@app.route('/signin', methods=['GET'])
-def signin():
-    
-    # Connect to db
-    conn = connect_to_db()
-    cursor = conn.cursor()
-
-    print('Hello!')
-
-    return render_template('SignIn.html')
-
-
-@app.route('/go_to_signin')
-def go_to_signin():
-    # This route will redirect the user to the signin page
-    return redirect(url_for('signin'))
-
 @app.route('/contactus', methods=['GET', 'POST'])
 def contactus():
     if request.method == 'POST':
@@ -350,6 +333,7 @@ def contactus():
         return render_template('thankyou.html')
     
     return render_template('contactus.html')
+
 
 @app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
